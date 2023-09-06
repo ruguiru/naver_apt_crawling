@@ -6,7 +6,7 @@ class Log:
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
-        full_path = path + '\\result_' + self.datetime() + '.log'
+        full_path = path + '\\log\\result_' + self.datetime() + '.log'
         file_handler = logging.FileHandler(full_path, encoding='utf8')
         stream_handler = logging.StreamHandler()
 
