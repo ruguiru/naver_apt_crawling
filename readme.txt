@@ -1,0 +1,1 @@
+최초 실행시 setupvirtual.bat 실행해주세요
