@@ -2,11 +2,15 @@ import logging
 import datetime
 
 class Log:
-    def __init__(self, path) -> None:
+    def __init__(self, path, prefix: str = '') -> None:
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.INFO)
 
-        full_path = path + '\\log\\result_' + self.datetime() + '.log'
+        prefix_strip = prefix
+        if prefix:
+            prefix_strip = prefix.replace(' ', '')
+
+        full_path = path + '\\log\\' + prefix_strip + '_' + self.datetime() + '.log'
         file_handler = logging.FileHandler(full_path, encoding='utf8')
         stream_handler = logging.StreamHandler()
 

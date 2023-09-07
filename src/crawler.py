@@ -10,6 +10,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException
 import time
 import datetime
 
@@ -95,7 +96,7 @@ class Crawler:
         # 검색 조건 및 url 설정
         conf = Config(self.path() + '\\' + self.conf_file)
         urlmaker = UrlMaker(conf)
-        logger = Log(self.path())
+        logger = Log(self.path(), conf.search_str())
 
         # 네이버 부동산 초기 화면 띄우기
         self.brower.get(urlmaker.startingUrl())
@@ -178,45 +179,37 @@ class Crawler:
             while limit <= len(items):
                 action = ActionChains(self.brower)
                 action.move_to_element(items[limit-1]).perform()
+                time.sleep(1)
                 items = item_area.find_elements(By.CSS_SELECTOR, '.item')
                 limit += 20
+
+            time.sleep(2)
 
             cnt = 0
             # 가장 아래 스크롤상태에서 역으로 올라가면서 클릭해야 씹히지 않는다
             for item in reversed(items):
                 cnt += 1
 
-                # 상세 정보 클릭
-                view_btns = item.find_elements(By.CSS_SELECTOR, 'a.label.label--cp')
-                # 타 웹사이트 링크로 가는 케이스 차단
-                if len(view_btns) > 0:
-                    view_btns[0].click()
-                else:                 
-                    item.click()
+                try:                
+                    # 상세 정보 클릭
+                    view_btns = item.find_elements(By.CSS_SELECTOR, 'a.label.label--cp')
+                    # 타 웹사이트 링크로 가는 케이스 차단
+                    if len(view_btns) > 0:
+                        view_btns[0].click()
+                    else:                 
+                        item.click()
 
-                time.sleep(1.5)
-
-                # 상세 정보 패널 크롤링
-
-                # 매물특징
-                # 공급/전용면적
-                # 해당층/총층
-                # 방수/욕실수
-                # 월관리비
-                # 관리비 포함
-                # 융자금
-                # 기보증금/월세
-                # 방향
-                # 현관구조
-                # 난방(방식/연료)
-                # 입주가능일
-                # 총주차대수
-                # 해당면적 세대수
-                # 건축물 용도
-                # 매물번호
-                # 매물설명
-                # 중개사          
-                info_dic = self.extract_table('table')
+                    time.sleep(1.5)
+                
+                    detail_panel = self.brower.find_element(By.CSS_SELECTOR, '.detail_panel')
+                    title = detail_panel.find_element(By.CSS_SELECTOR, '.info_title_wrap').text
+                    price_origin = detail_panel.find_element(By.CSS_SELECTOR, '.info_article_price').text
+                    dealtype = self.extract_dealtype(price_origin)
+                    price = self.extract_price(price_origin)
+                    info_dic = self.extract_table('table')
+                except NoSuchElementException:
+                    logger.error(f'[Exception][{cnt}]')
+                    continue
 
                 id = int(info_dic['매물번호'])
                 room_cnt = int(info_dic['방수/욕실수'][0])
@@ -225,18 +218,12 @@ class Crawler:
                 area = float(area_origin.split('㎡/')[0].strip())
                 saletype = building[1]
 
-                detail_panel = self.brower.find_element(By.CSS_SELECTOR, '.detail_panel')
-                title = detail_panel.find_element(By.CSS_SELECTOR, '.info_title_wrap').text
-                price_origin = detail_panel.find_element(By.CSS_SELECTOR, '.info_article_price').text
-                dealtype = self.extract_dealtype(price_origin)
-                price = self.extract_price(price_origin)
-
                 # 2차 필터링
                 if not detail_filtering(conf, dealtype, price, area, years, room_cnt, bathroom_cnt):
-                    logger.info(f'[필터링][{cnt}] 매물:{title} 매물번호:{id} 타입:{saletype} 면적:{area} 가격:{dealtype}/{price} 방/욕실:{room_cnt}/{bathroom_cnt}')
+                    logger.info(f'[필터링][{cnt}] 매물:{title} 매물번호:{id} 타입:{saletype} 연식:{years}년 면적:{area} 가격:{dealtype}/{price} 방/욕실:{room_cnt}/{bathroom_cnt}')
                     continue                    
 
-                logger.info(f'[{cnt}] 매물:{title} 매물번호:{id} 타입:{saletype} 면적:{area} 가격:{dealtype}/{price} 방/욕실:{room_cnt}/{bathroom_cnt}')
+                logger.info(f'[{cnt}] 매물:{title} 매물번호:{id} 타입:{saletype} 연식:{years}년 면적:{area} 가격:{dealtype}/{price} 방/욕실:{room_cnt}/{bathroom_cnt}')
 
                 # 데이터 프레임화 및 DB 저장
             pass
