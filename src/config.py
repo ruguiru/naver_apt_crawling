@@ -8,7 +8,7 @@ class Config():
         pass
 
     def boolean(self, data):
-        if len(data) == 0:
+        if not data:
             return False
         
         if int(data) == 0:
@@ -17,7 +17,7 @@ class Config():
         return True
     
     def integer(self, data):
-        if len(data) == 0:
+        if not data:
             return 0
 
         return int(data)
@@ -35,24 +35,30 @@ class Config():
 
         # [FILTER] 섹션 읽기
         filter_section = config['FILTER']
-
+        # 매물타입
         self.apartment = self.boolean(filter_section.get('아파트'))
         self.officetel = self.boolean(filter_section.get('오피스텔'))
-        self.maemae = self.boolean(filter_section.get('매매'))
-        self.jeonse = self.boolean(filter_section.get('전세'))
-        self.wolse = self.boolean(filter_section.get('월세'))
-
+        # 거래방식
+        self.dealtype = filter_section.get('거래방식')
+    
         # 가격 범위 읽기
         self.min_price = self.integer(filter_section.get('최소가격'))
         self.max_price = self.integer(filter_section.get('최대가격'))
-        self.wolse_min_price = self.integer(filter_section.get('월세최소가격'))
-        self.wolse_max_price = self.integer(filter_section.get('월세최대가격'))
+        self.min_wolse = self.integer(filter_section.get('최소월세'))
+        self.max_wolse = self.integer(filter_section.get('최대월세'))
+
+        if self.dealtype != '월세':
+            self.min_wolse = 0
+            self.max_wolse = 0
 
         # 면적 범위 읽기
         self.min_area = self.integer(filter_section.get('최소면적'))
         self.max_area = self.integer(filter_section.get('최대면적'))
         self.min_area_sq = self.min_area * 3.3
-        self.max_area_sq = (self.max_area + 10) * 3.3
+        if self.max_area != 0:
+            self.max_area_sq = (self.max_area + 10) * 3.3
+        else:
+            self.max_area_sq = 0
 
         # 연식 범위 읽기
         self.min_year = self.integer(filter_section.get('최소연식'))
@@ -70,10 +76,29 @@ class Config():
         return f'{self.sido} {self.sigungu} {self.eupmyeondong}'
         pass
 
+    def __str__(self) -> str:
+        return f'\
+[검색조건] \
+지역:{self.search_str() } \
+아파트:{self.apartment} \
+오피스텔:{self.officetel} \
+거래방식:{self.dealtype} \
+최소가격:{self.min_price} \
+최대가격:{self.max_price} \
+최소윌세:{self.min_wolse} \
+최대윌세:{self.max_wolse} \
+최소면적:{self.min_area} \
+최대면적:{self.max_area} \
+최소연식:{self.min_year} \
+최대연식:{self.max_year} \
+방수:{self.room_cnt} \
+욕실수:{self.bathroom_cnt}'
     pass
 
 
 if __name__ == '__main__':
     full_path = os.getcwd() + '\\config.ini'
     conf = Config(full_path)
+
+    print(conf)
     pass

@@ -28,8 +28,8 @@ class UrlMaker:
 
     def make(self, conf: Config):
         self.append_saletype(conf.apartment, conf.officetel)
-        self.append_tradetype(conf.maemae, conf.jeonse, conf.wolse)
-        self.append_price(conf.min_price, conf.max_price, conf.wolse_min_price, conf.wolse_max_price)
+        self.append_dealtype(conf.dealtype)
+        self.append_price(conf.min_price, conf.max_price, conf.min_wolse, conf.max_wolse)
         self.append_area(conf.min_area, conf.max_area)
         self.append_years(conf.min_year, conf.max_year)
         self.append_rooms(conf.room_cnt, conf.bathroom_cnt)
@@ -44,34 +44,32 @@ class UrlMaker:
 
         if len(suburl) > 3:
             suburl = suburl[:-1]
-            self.append_url += suburl            
+            self.append_url += suburl
         pass
 
-    def append_tradetype(self, maemae, jeonse, wolse):
-        suburl = '&b='
-        if maemae == True:
-            suburl += 'A1:'
-        if jeonse == True:
-            suburl += 'B1:'
-        if wolse == True:
-            suburl += 'B2:'
+    def append_dealtype(self, dealtype):
+        suburl = ''
+        if dealtype == '매매':
+            suburl += '&b=A1'
+        elif dealtype == '전세':
+            suburl += '&b=B1'
+        elif dealtype == '월세':
+            suburl += '&b=B2'
 
-        if len(suburl) > 3:
-            suburl = suburl[:-1]
-            self.append_url += suburl        
+        self.append_url += suburl
+
         pass
 
-    def append_price(self, min, max, wolse_min, wolse_max):
+    def append_price(self, min, max, min_wolse, max_wolse):
         suburl = ''
         if min > 0:
             suburl += f'&f={min}'
         if max > 0:
             suburl += f'&g={max}'
-
-        if wolse_min > 0:
-            suburl += f'&c={min}'
-        if wolse_max > 0:
-            suburl += f'&d={max}'
+        if min_wolse > 0:
+            suburl += f'&c={min_wolse}'
+        if max_wolse > 0:
+            suburl += f'&d={max_wolse}'
 
         suburl += '&e=RETAIL'
         self.append_url += suburl
